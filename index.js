@@ -1,15 +1,8 @@
 const app = require('./app')
 const mongoose = require('mongoose')
+const port = 5000
 
-if (typeof process.env.NODE_ENV === 'undefined') {
-    require('dotenv').config()
-}
-const port = process.env.PORT
-
-mongoose.connect(process.env.DB,(err, res)=>{
-    if (err) throw err
-    console.log('ok conexion db');
-    app.listen(port,()=>{
-        console.log(port);
-    })
+mongoose.connect('mongodb://127.0.0.1:27017/pokemones', async (err, res) => {
+    if (err) throw err;
+    console.log('base de datos mongo ok')
 })

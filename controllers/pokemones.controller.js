@@ -1,44 +1,48 @@
-const seguridad = require('../services/seguridad')
 const pokemon = require('../models/pokemon.model')
-const uuid = require('uuid')
-const mysqlServices = require('../services/db')
-const mysql = new mysqlServices()
+const uuid = require('uuid');
+const axios = require('axios');
+const mongoose = require('mongoose')
 
-const listar = (req,resp) => {
-    return resp.status(200).send('listado')
-}
-const nuevoToken = (req, res)=>{
-    return res.status(200).send({token: seguridad.crearToken()})
-}
+const url  = 'https://pokeapi.co/api/v2/pokemon/';
 
-const verificarToken = (req, res) =>{
-    return res.status(200).send('ok')
-}
 
-const agregarPokemon = (req, res) =>{
-    console.log(req.body);
-    const {nombre, peso, familia} = req.body
-    const schemaPkemon = new pokemon({nombre, peso, familia, uuid:uuid.v4()})
-    schemaPkemon.save(err =>{
-        if (err) {return res.status(500).send('algo fallo: '+err)}
-        return res.status(200).send({ok:true})
+const getPkemonApi = async (req, res)=>{
+    dropColletion()
+    await axios.get(url)
+    .then((data)=>{
+        data.data.results.map((item)=>{
+            let nombre = item.name
+            let url = item.url
+            const schemaPokemon = new pokemon({ nombre, url, uuid: uuid.v4() })
+            schemaPokemon.save(err => {
+                if(err){
+                    console.log('ERROR CREANDO REGISTRO');
+                }else{
+                    console.log('REGISTRO CREADO CORRECATMENTE');
+                }
+                //if (err) return res.status(500).send({ err: ' Error al insertar los datos: ' + err })
+                //return res.status(200).send({ ok: true })
+            })
+        })
+    })
+    .catch(function (error) {
+        res.status(400).send( error)
     })
 }
 
-const listarPokemonesDos = (req, res)=>{
-    mysql.consultar('select * from pokemones')
-    return res.status(200).send({ok:true})
+function dropColletion() {
+    mongoose.connect('mongodb://127.0.0.1:27017/pokemones', async (err, res) => {
+        res.dropCollection("pokemons",err => {
+            if (err) {
+                console.log('ERROR BORRANDO COLLECTION');
+            }else{
+                console.log('COLLECTION BORRADA');
+            }
+        })
+    })
 }
-
-const listarPokemones = (req, res)=>{
    
-}
-
 module.exports = {
-    listar,
-    nuevoToken,
-    verificarToken,
-    agregarPokemon,
-    listarPokemones,
-    listarPokemonesDos
+    getPkemonApi,
+    dropColletion
 }
